@@ -1,0 +1,21 @@
+name: CI
+
+# Trigger this workflow on any push (to main) or pull request.
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  build:
+    name: Build and test
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.14.9'
+      - run: scripts/ci.sh
