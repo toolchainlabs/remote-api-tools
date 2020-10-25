@@ -1,6 +1,6 @@
-module github.com/toolchainlabs/reapi-tools
+module github.com/toolchainlabs/remote-api-tools
 
-go 1.14
+go 1.15
 
 require (
 	github.com/bazelbuild/remote-apis v0.0.0-20200914214605-f54876595da9
