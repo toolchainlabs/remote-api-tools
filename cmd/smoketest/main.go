@@ -468,15 +468,17 @@ OUTER:
 				return fmt.Errorf("execution failed: %s", s2.Err())
 			}
 
-			var metadata remote_pb.ExecuteOperationMetadata
 			rawMetadata := operation.GetMetadata()
-			err = proto.Unmarshal(rawMetadata.Value, &metadata)
-			if err != nil {
-				return fmt.Errorf("unable to parse metadata: %s", err)
+			if rawMetadata != nil {
+				var metadata remote_pb.ExecuteOperationMetadata
+				err = proto.Unmarshal(rawMetadata.Value, &metadata)
+				if err != nil {
+					return fmt.Errorf("unable to parse metadata: %s", err)
+				}
+				log.WithFields(logFields).WithFields(log.Fields{
+					"stage": metadata.Stage.String(),
+				}).Debugf("metadata")
 			}
-			log.WithFields(logFields).WithFields(log.Fields{
-				"stage": metadata.Stage.String(),
-			}).Debugf("metadata")
 
 			if operation.Done {
 				if s := operation.GetError(); s != nil {
