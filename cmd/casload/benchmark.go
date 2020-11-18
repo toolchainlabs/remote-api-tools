@@ -33,6 +33,7 @@ type loadProgram struct {
 	numRequests int
 	minBlobSize int
 	maxBlobSize int
+	concurrency int
 }
 
 type loadResult struct {
@@ -48,8 +49,8 @@ func (bp *loadProgram) String() string {
 
 func parseLoadProgram(program string) (*loadProgram, error) {
 	parts := strings.Split(program, ":")
-	if len(parts) != 3 {
-		return nil, fmt.Errorf("unable to parse program: expected 3 fields, got %d fields", len(parts))
+	if len(parts) < 3 || len(parts) > 4 {
+		return nil, fmt.Errorf("unable to parse program: expected 3-4 fields, got %d fields", len(parts))
 	}
 
 	numRequests, err := strconv.Atoi(parts[0])
@@ -59,18 +60,28 @@ func parseLoadProgram(program string) (*loadProgram, error) {
 
 	minBlobSize, err := strconv.Atoi(parts[1])
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse number of requests: %s: %s", parts[0], err)
+		return nil, fmt.Errorf("unable to parse min blob size: %s: %s", parts[1], err)
 	}
 
 	maxBlobSize, err := strconv.Atoi(parts[2])
 	if err != nil {
-		return nil, fmt.Errorf("unable to parse number of requests: %s: %s", parts[0], err)
+		return nil, fmt.Errorf("unable to parse max blob size: %s: %s", parts[2], err)
+	}
+
+	concurrency := 50
+	if len(parts) >= 4 {
+		c, err := strconv.Atoi(parts[3])
+		if err != nil {
+			return nil, fmt.Errorf("unable to parse concurrency: %s: %s", parts[3], err)
+		}
+		concurrency = c
 	}
 
 	p := loadProgram{
 		numRequests: numRequests,
 		minBlobSize: minBlobSize,
 		maxBlobSize: maxBlobSize,
+		concurrency: concurrency,
 	}
 
 	return &p, nil
@@ -152,7 +163,7 @@ func runLoadProgram(ctx context.Context, clients *clientsStruct, p *loadProgram)
 	workChan := make(chan *workItem)
 	resultChan := make(chan *workResult)
 
-	for c := 0; c < 50; c++ {
+	for c := 0; c < p.concurrency; c++ {
 		go worker(workChan, resultChan)
 	}
 
