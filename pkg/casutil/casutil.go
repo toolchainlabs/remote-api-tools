@@ -20,8 +20,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	remote_pb "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2"
 	"github.com/golang/protobuf/proto"
+	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

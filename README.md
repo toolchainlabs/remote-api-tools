@@ -29,6 +29,14 @@ $ ./smoketest -r 127.0.0.1:8980 -p OSFamily=Linux
 There are other options to enable TLS, send an authorization token, add additional platform properties, etc.
 Run `smoketest -h` to see the available options.
 
+## Development
+
+To rebuild the generated Go files, run:
+
+```
+$ ./gen-proto.sh
+```
+
 ## Contributions
 
 Contributions are welcome. Please open a pull request or file an issue.
