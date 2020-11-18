@@ -110,7 +110,7 @@ func processWorkItem(wi *workItem) *workResult {
 	buf := make([]byte, wi.blobSize)
 	n, err := rand.Read(buf)
 	if err != nil {
-		log.Error("rand failed: %s", err)
+		log.Errorf("rand failed: %s", err)
 		return &workResult{
 			err: err,
 		}
