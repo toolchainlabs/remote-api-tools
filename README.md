@@ -6,7 +6,9 @@ Such servers include [BuildBarn](https://github.com/buildbarn/bb-remote-executio
 [Buildfarm](https://github.com/bazelbuild/bazel-buildfarm/), and
 [BuildGrid](https://gitlab.com/BuildGrid/buildgrid).
 
-## REAPI Smoke Test
+## Tools
+
+### REAPI Smoke Test
 
 The REAPAI "smoke test" is a simple operational check of an REAPI instance. It checks whether an REAPI server
 can handle basic CAS, Action Cache, and Execution service requests. The test creates a unique Command proto,
@@ -28,6 +30,28 @@ $ ./smoketest -r 127.0.0.1:8980 -p OSFamily=Linux
 
 There are other options to enable TLS, send an authorization token, add additional platform properties, etc.
 Run `smoketest -h` to see the available options.
+
+### Load Testing
+
+The `casload` tool generates CAS traffic according to one or more specifications of the form:
+NUM_REQUESTS:MIN_BLOB_SIZE:MAX_BLOB_SIZE[:CONCURRENCY].
+
+To build the `casload` binary:
+
+```
+$ cd cmd/smoketest
+$ go build
+```
+
+If you are running a CAS instance at 127.0.0.1:8980, then you can generate 15,000 requests with blob sizes ranging
+from 5000 bytes to 10,000 bytes with 100 concurrent requests by running:
+
+```
+$ ./casload -r 127.0.0.1:8980 15000:5000:10000:100
+```
+
+There are other options to enable TLS, send an authorization token, etc.
+Run `casload -h` to see the available options.
 
 ## Development
 
