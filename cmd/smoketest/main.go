@@ -25,12 +25,12 @@ import (
 	"sync"
 	"time"
 
-	remote_pb "github.com/bazelbuild/remote-apis/build/bazel/remote/execution/v2"
 	"github.com/golang/protobuf/proto"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/pflag"
 	"github.com/toolchainlabs/remote-api-tools/pkg/casutil"
 	"github.com/toolchainlabs/remote-api-tools/pkg/grpcutil"
+	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
 	longrunning_pb "google.golang.org/genproto/googleapis/longrunning"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
