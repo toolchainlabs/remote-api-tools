@@ -136,12 +136,7 @@ func processWorkItem(wi *workItem) *workResult {
 	response, err := wi.clients.casClient.BatchUpdateBlobs(wi.ctx, &request)
 	if err == nil {
 		s := status.FromProto(response.Responses[0].Status)
-		if s.Code() == codes.OK {
-			return &workResult{
-				blobSize: wi.blobSize,
-				err:      nil,
-			}
-		} else {
+		if s.Code() != codes.OK {
 			return &workResult{
 				blobSize: wi.blobSize,
 				err:      s.Err(),
@@ -152,6 +147,26 @@ func processWorkItem(wi *workItem) *workResult {
 			blobSize: wi.blobSize,
 			err:      err,
 		}
+	}
+
+	missingBlobs, err := casutil.FindMissingBlobs(wi.ctx, wi.clients.casClient, []*remote_pb.Digest{digest}, wi.clients.instanceName)
+	if err != nil {
+		return &workResult{
+			blobSize: wi.blobSize,
+			err:      err,
+		}
+	}
+
+	if len(missingBlobs) > 0 {
+		return &workResult{
+			blobSize: wi.blobSize,
+			err:      fmt.Errorf("Just-written blob is reported as not present in the CAS."),
+		}
+	}
+
+	return &workResult{
+		blobSize: wi.blobSize,
+		err:      nil,
 	}
 }
 

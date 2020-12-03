@@ -120,3 +120,22 @@ func GetProto(
 
 	return nil
 }
+
+func FindMissingBlobs(
+	ctx context.Context,
+	casClient remote_pb.ContentAddressableStorageClient,
+	digests []*remote_pb.Digest,
+	instanceName string,
+) ([]*remote_pb.Digest, error) {
+	request := remote_pb.FindMissingBlobsRequest{
+		BlobDigests:  digests,
+		InstanceName: instanceName,
+	}
+
+	response, err := casClient.FindMissingBlobs(ctx, &request)
+	if err != nil {
+		return nil, err
+	}
+
+	return response.MissingBlobDigests, nil
+}
