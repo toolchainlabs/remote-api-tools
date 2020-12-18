@@ -376,12 +376,22 @@ func smokeTest(
 	if err != nil {
 		return fmt.Errorf("failed to store command: %s", err)
 	}
+	log.WithFields(logFields).WithField("command_digest", digestToString(commandDigest)).Debug("command digest")
+
+	missingDigests, err := casutil.FindMissingBlobs(ctx, cs.casClient, []*remote_pb.Digest{commandDigest}, instanceName)
+	if err != nil {
+		return fmt.Errorf("failed to verify command was stored: %s", err)
+	}
+	if len(missingDigests) > 0 {
+		return fmt.Errorf("command was not stored in CAS")
+	}
 
 	log.WithFields(logFields).Info("storing input root in CAS")
 	inputRootDigest, err := storeSimpleDirectory(ctx, cs.casClient, instanceName)
 	if err != nil {
 		return fmt.Errorf("failed to store input root: %s", err)
 	}
+	log.WithFields(logFields).WithField("input_root_digest", digestToString(inputRootDigest)).Debug("input root digest")
 
 	log.WithFields(logFields).Info("storing action in CAS")
 	action := &remote_pb.Action{
@@ -392,11 +402,15 @@ func smokeTest(
 	if err != nil {
 		return fmt.Errorf("failed to store action: %s", err)
 	}
-	log.WithFields(logFields).WithFields(log.Fields{
-		"command_digest":    digestToString(commandDigest),
-		"input_root_digest": digestToString(inputRootDigest),
-		"action_digest":     digestToString(actionDigest),
-	}).Debug("digests")
+	log.WithFields(logFields).WithField("action_digest", digestToString(actionDigest)).Debug("action digest")
+
+	missingDigests, err = casutil.FindMissingBlobs(ctx, cs.casClient, []*remote_pb.Digest{actionDigest}, instanceName)
+	if err != nil {
+		return fmt.Errorf("failed to verify action was stored: %s", err)
+	}
+	if len(missingDigests) > 0 {
+		return fmt.Errorf("action was not stored in CAS")
+	}
 
 	// Check Action Cache to make sure the action was not run. It should not have been run since we insert
 	// an environment variable with the current timestamp to make action unique.
