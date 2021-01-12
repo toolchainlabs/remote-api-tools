@@ -57,7 +57,7 @@ func (self *loadDigestsAction) RunAction(actionContext *ActionContext) error {
 
 		present, err := strconv.ParseBool(parts[2])
 		if err != nil {
-			return fmt.Errorf("invalid presennce specifier (%d:%d)", self.filename, lineNum)
+			return fmt.Errorf("invalid presennce specifier (%s:%d)", self.filename, lineNum)
 		}
 
 		digest := remote_pb.Digest{
