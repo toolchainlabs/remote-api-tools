@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+if [ ! -d protos ]; then
+  echo "ERROR: This script must be run from the root of the repository." 1>&2
+  exit 1
+fi
+
 protoc \
   -Iprotos/ \
   --go_out=,plugins=grpc:protos/ \

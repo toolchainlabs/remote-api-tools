@@ -58,7 +58,7 @@ Run `casload -h` to see the available options.
 To rebuild the generated Go files, run:
 
 ```
-$ ./gen-proto.sh
+$ ./scripts/gen-proto.sh
 ```
 
 ## Contributions
