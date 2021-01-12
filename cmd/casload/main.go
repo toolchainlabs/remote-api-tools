@@ -16,7 +16,7 @@ package main
 
 import (
 	"context"
-	"fmt"
+	"github.com/toolchainlabs/remote-api-tools/pkg/load"
 	"io/ioutil"
 	"math/rand"
 	"strings"
@@ -72,13 +72,13 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	var bps []*loadProgram
+	var actions []load.Action
 	for _, arg := range args {
-		bp, err := parseLoadProgram(arg)
+		action, err := load.ParseAction(arg)
 		if err != nil {
 			log.Fatalf("error parsing program: %s", err)
 		}
-		bps = append(bps, bp)
+		actions = append(actions, action)
 	}
 
 	ctx := context.Background()
@@ -89,18 +89,18 @@ func main() {
 	}
 	defer cs.Close()
 
-	for _, bp := range bps {
-		result, err := runLoadProgram(ctx, cs, bp)
-		if err != nil {
-			log.Fatalf("error during benchmark: %s", err)
-		}
+	actionContext := load.ActionContext{
+		InstanceName:     *instanceNameOpt,
+		CasClient:        cs.casClient,
+		BytestreamClient: cs.bytestreamClient,
+		Ctx:              ctx,
+		KnownDigests:     make(map[string]bool),
+	}
 
-		fmt.Printf("program: %s\n  startTime: %s\n  endTime: %s\n  success: %d\n  errors: %d\n",
-			bp.String(),
-			result.startTime.String(),
-			result.endTime.String(),
-			result.success,
-			result.errors,
-		)
+	for _, action := range actions {
+		err := action.RunAction(&actionContext)
+		if err != nil {
+			log.Fatalf("error during load test: %s", err)
+		}
 	}
 }
