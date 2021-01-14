@@ -23,8 +23,14 @@ import (
 var RetriesExceededError = errors.New("exceeded maximum number of retries")
 
 // Retry a function with exponential backoff.
-func ExpBackoff(n int, interval time.Duration, maxBackoffTime time.Duration, f func() (interface{}, error), isRetryable func(error) bool) (interface{}, error) {
-	multiplier := 1
+func ExpBackoff(
+	n int,
+	interval time.Duration,
+	maxBackoffTime time.Duration,
+	f func() (interface{}, error),
+	isRetryable func(error) bool,
+) (interface{}, error) {
+	maxIntervals := 1
 	attempt := 0
 
 	for {
@@ -42,12 +48,12 @@ func ExpBackoff(n int, interval time.Duration, maxBackoffTime time.Duration, f f
 			return nil, RetriesExceededError
 		}
 
-		backoffTimeNanos := int64(1+rand.Int()%multiplier) * int64(interval)
+		backoffTimeNanos := int64(1+rand.Int()%maxIntervals) * int64(interval)
 		if backoffTimeNanos > int64(maxBackoffTime) {
 			backoffTimeNanos = int64(maxBackoffTime)
 		}
 		time.Sleep(time.Duration(backoffTimeNanos))
 
-		multiplier *= 2
+		maxIntervals *= 2
 	}
 }
