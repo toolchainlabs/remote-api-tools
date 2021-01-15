@@ -17,6 +17,7 @@ package load
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"github.com/toolchainlabs/remote-api-tools/pkg/retry"
 	"math/rand"
 	"strconv"
 	"time"
@@ -106,19 +107,23 @@ func processWorkItem(wi *generateWorkItem) *generateWorkResult {
 		}
 	}
 
-	missingBlobs, err := casutil.FindMissingBlobs(wi.actionContext.Ctx, wi.actionContext.CasClient, []*remote_pb.Digest{digest},
-		wi.actionContext.InstanceName)
+	_, err = retry.ExpBackoff(6, time.Duration(250)*time.Millisecond, time.Duration(5)*time.Second, func() (interface{}, error) {
+		missingBlobs, err := casutil.FindMissingBlobs(wi.actionContext.Ctx, wi.actionContext.CasClient, []*remote_pb.Digest{digest},
+			wi.actionContext.InstanceName)
+		if err != nil {
+			return nil, err
+		}
+		if len(missingBlobs) > 0 {
+			return nil, fmt.Errorf("just-written blob is reported as not present in the CAS")
+		}
+		return nil, nil
+	}, func(err error) bool {
+		return true
+	})
 	if err != nil {
 		return &generateWorkResult{
 			blobSize: wi.blobSize,
-			err:      err,
-		}
-	}
-
-	if len(missingBlobs) > 0 {
-		return &generateWorkResult{
-			blobSize: wi.blobSize,
-			err:      fmt.Errorf("Just-written blob is reported as not present in the CAS."),
+			err:      fmt.Errorf("failed to verify existence of blob: %s", err),
 		}
 	}
 
