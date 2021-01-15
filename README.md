@@ -47,11 +47,31 @@ If you are running a CAS instance at 127.0.0.1:8980, then you can generate 15,00
 from 5000 bytes to 10,000 bytes with 100 concurrent requests by running:
 
 ```
-$ ./casload -r 127.0.0.1:8980 15000:5000:10000:100
+$ ./casload -r 127.0.0.1:8980 generate:15000:5000:10000:100
 ```
 
 There are other options to enable TLS, send an authorization token, etc.
 Run `casload -h` to see the available options.
+
+`casload` takes "load actions" as parameters which drive the load test. Each load action has access to a set of
+"known digests".
+
+The load actions are:
+
+* `generate:NUM_BLOBS:MIN_BLOB_SIZE:MAX_BLOB_SIZE[:CONCURRENCY]` - This load action generates random blobs and
+  writes them to the CAS. Each digest is added to the set of known digests. The blobs will be between
+  `MIN_BLOB_SIZE` and `MAX_BLOB_SIZE` in size. The action will use CONCURRENCY workers to send requests.
+
+* `load-digests:FILENAME` - Load digests from a CSV file into the set of known digests. The CSV file consists of
+  lines in the following format: `HASH,SIZE,true|false` where the third field is whether the digest is known to
+  be present in the CAS or not.
+
+* `save-digests:FILENAME` - Save the set of known digests to a CSV file in the same format expected by the
+  `load-digests` load action.
+
+* `read:NUM_DIGESTS_TO_READ:NUM_READS_PER_DIGEST[:CONCURRENCY]` - This load action randomly chooses
+  `NUM_DIGESTS_TO_READ` from the set of known digests and issues NUM_READS_PER_DIGEST RPCs to read the blob from
+  the CAS and verify its content matches the digest hash. The action will use CONCURRENCY workers to send requests.
 
 ## Development
 
