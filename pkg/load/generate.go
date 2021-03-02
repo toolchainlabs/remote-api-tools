@@ -24,8 +24,6 @@ import (
 
 	"github.com/toolchainlabs/remote-api-tools/pkg/casutil"
 	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 type generateAction struct {
@@ -64,6 +62,23 @@ func generateWorker(workChan <-chan *generateWorkItem, resultChan chan<- *genera
 	log.Debug("generateWorker stopped")
 }
 
+func writeBlobBatch(actionContext *ActionContext, data []byte) (*remote_pb.Digest, error) {
+	digest, err := casutil.PutBytes(actionContext.Ctx, actionContext.CasClient, data, actionContext.InstanceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write blob: %s", err)
+	}
+	return digest, nil
+}
+
+func writeBlobStream(actionContext *ActionContext, data []byte) (*remote_pb.Digest, error) {
+	digest, err := casutil.PutBytesStream(actionContext.Ctx, actionContext.BytestreamClient, data, actionContext.WriteChunkSize,
+		actionContext.InstanceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to write blob (bytestream) %s", err)
+	}
+	return digest, nil
+}
+
 func processWorkItem(wi *generateWorkItem) *generateWorkResult {
 	buf := make([]byte, wi.blobSize)
 	n, err := rand.Read(buf)
@@ -79,28 +94,14 @@ func processWorkItem(wi *generateWorkItem) *generateWorkResult {
 			err: err,
 		}
 	}
-	digest := casutil.ComputeDigest(buf)
 
-	request := remote_pb.BatchUpdateBlobsRequest{
-		InstanceName: wi.actionContext.InstanceName,
-		Requests: []*remote_pb.BatchUpdateBlobsRequest_Request{
-			{
-				Digest: digest,
-				Data:   buf,
-			},
-		},
-	}
-
-	response, err := wi.actionContext.CasClient.BatchUpdateBlobs(wi.actionContext.Ctx, &request)
-	if err == nil {
-		s := status.FromProto(response.Responses[0].Status)
-		if s.Code() != codes.OK {
-			return &generateWorkResult{
-				blobSize: wi.blobSize,
-				err:      s.Err(),
-			}
-		}
+	var digest *remote_pb.Digest
+	if int64(wi.blobSize) < wi.actionContext.MaxBatchBlobSize {
+		digest, err = writeBlobBatch(wi.actionContext, buf)
 	} else {
+		digest, err = writeBlobStream(wi.actionContext, buf)
+	}
+	if err != nil {
 		return &generateWorkResult{
 			blobSize: wi.blobSize,
 			err:      err,

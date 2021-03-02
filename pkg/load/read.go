@@ -63,45 +63,78 @@ func readWorker(workChan <-chan *readWorkItem, resultChan chan<- *readWorkResult
 	log.Debug("readWorker stopped")
 }
 
-func processReadWorkItem(wi *readWorkItem) *readWorkResult {
-	// TODO: This should use bytestream if size execeeds the server's batch RPC limit.
-
+func readBlobBatch(actionContext *ActionContext, digest *remote_pb.Digest) ([]byte, error) {
 	request := remote_pb.BatchReadBlobsRequest{
-		InstanceName: wi.actionContext.InstanceName,
+		InstanceName: actionContext.InstanceName,
 		Digests: []*remote_pb.Digest{
-			wi.digest,
+			digest,
 		},
 	}
 
-	response, err := wi.actionContext.CasClient.BatchReadBlobs(wi.actionContext.Ctx, &request)
-	if err == nil {
-		s := status.FromProto(response.Responses[0].Status)
-		if s.Code() != codes.OK {
-			return &readWorkResult{
-				digest: wi.digest,
-				err:    s.Err(),
-			}
-		}
+	response, err := actionContext.CasClient.BatchReadBlobs(actionContext.Ctx, &request)
+	if err != nil {
+		return nil, err
+	}
 
-		data := response.Responses[0].Data
-		if int64(len(data)) != wi.digest.SizeBytes {
-			return &readWorkResult{
-				digest: wi.digest,
-				err:    fmt.Errorf("size mismatch, expected %d, actual %d", wi.digest.SizeBytes, len(data)),
-			}
-		}
+	s := status.FromProto(response.Responses[0].Status)
+	if s.Code() != codes.OK {
+		return nil, s.Err()
+	}
 
-		computedDigest := casutil.ComputeDigest(data)
-		if computedDigest.Hash != wi.digest.Hash {
-			return &readWorkResult{
-				digest: wi.digest,
-				err:    fmt.Errorf("digest hash mismatch"),
-			}
-		}
+	if len(response.Responses) != 1 {
+		return nil, fmt.Errorf("expected 1 response in RPC call, got %d responses instead", len(response.Responses))
+	}
+
+	digestResponse := response.Responses[0]
+
+	if digestResponse.Digest.Hash != digest.Hash {
+		return nil, fmt.Errorf("expected digest %s in RPC call, got digest %s instead", digest.Hash, digestResponse.Digest.Hash)
+	}
+
+	if digestResponse.Digest.SizeBytes != digest.SizeBytes {
+		return nil, fmt.Errorf("expected size %d in RPC call, got size %d instead", digest.SizeBytes, digestResponse.Digest.SizeBytes)
+	}
+
+	return response.Responses[0].Data, nil
+}
+
+func readBlobStream(actionContext *ActionContext, digest *remote_pb.Digest) ([]byte, error) {
+	data, err := casutil.GetBytesStream(actionContext.Ctx, actionContext.BytestreamClient, digest, actionContext.InstanceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read blob (bytestream): %s", err)
+	}
+
+	return data, nil
+}
+
+func processReadWorkItem(wi *readWorkItem) *readWorkResult {
+	var data []byte
+	var err error
+
+	if wi.digest.SizeBytes < wi.actionContext.MaxBatchBlobSize {
+		data, err = readBlobBatch(wi.actionContext, wi.digest)
 	} else {
+		data, err = readBlobStream(wi.actionContext, wi.digest)
+	}
+	if err != nil {
 		return &readWorkResult{
 			digest: wi.digest,
 			err:    err,
+		}
+	}
+
+	if int64(len(data)) != wi.digest.SizeBytes {
+		return &readWorkResult{
+			digest: wi.digest,
+			err:    fmt.Errorf("size mismatch, expected %d, actual %d", wi.digest.SizeBytes, len(data)),
+		}
+	}
+
+	computedDigest := casutil.ComputeDigest(data)
+	if computedDigest.Hash != wi.digest.Hash {
+		return &readWorkResult{
+			digest: wi.digest,
+			err:    fmt.Errorf("digest hash mismatch, expected %s, actual %s", wi.digest, computedDigest.Hash),
 		}
 	}
 

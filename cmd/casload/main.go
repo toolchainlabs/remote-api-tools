@@ -36,6 +36,8 @@ func main() {
 	verboseOpt := pflag.CountP("verbose", "v", "increase logging verbosity")
 	useJsonLoggingOpt := pflag.Bool("log-json", false, "log using JSON")
 	allowInsecureAuthOpt := pflag.Bool("allow-insecure-auth", false, "allow credentials to be passed unencrypted (i.e., no TLS)")
+	writeChunkSize := pflag.Int64("write-chunk-size", 512*1024, "number of bytes per bytestream chunk")
+	maxBatchBlobSize := pflag.Int64("max-batch-blob-size", 512*1024, "maximum number of bytes per blob permitted to use BatchUpdateBlobs")
 
 	pflag.Parse()
 
@@ -95,6 +97,8 @@ func main() {
 		BytestreamClient: cs.bytestreamClient,
 		Ctx:              ctx,
 		KnownDigests:     make(map[string]bool),
+		WriteChunkSize:   *writeChunkSize,
+		MaxBatchBlobSize: *maxBatchBlobSize,
 	}
 
 	for _, action := range actions {

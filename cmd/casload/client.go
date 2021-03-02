@@ -30,10 +30,12 @@ import (
 )
 
 type clientsStruct struct {
-	conn             *grpc.ClientConn
-	instanceName     string
-	casClient        remote_pb.ContentAddressableStorageClient
-	bytestreamClient bytestream_pb.ByteStreamClient
+	conn               *grpc.ClientConn
+	instanceName       string
+	casClient          remote_pb.ContentAddressableStorageClient
+	bytestreamClient   bytestream_pb.ByteStreamClient
+	capabilitiesClient remote_pb.CapabilitiesClient
+	maxBatchBlobSize   int64
 }
 
 func (s *clientsStruct) Close() error {
@@ -76,12 +78,23 @@ func setupClients(
 
 	casClient := remote_pb.NewContentAddressableStorageClient(conn)
 	byteStreamClient := bytestream_pb.NewByteStreamClient(conn)
+	capabilitiesClient := remote_pb.NewCapabilitiesClient(conn)
+
+	capabilitiesRequest := remote_pb.GetCapabilitiesRequest{
+		InstanceName: instanceName,
+	}
+	capabilities, err := capabilitiesClient.GetCapabilities(ctx, &capabilitiesRequest)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve capabilities: %s", err)
+	}
 
 	cs := clientsStruct{
-		conn:             conn,
-		instanceName:     instanceName,
-		casClient:        casClient,
-		bytestreamClient: byteStreamClient,
+		conn:               conn,
+		instanceName:       instanceName,
+		casClient:          casClient,
+		bytestreamClient:   byteStreamClient,
+		capabilitiesClient: capabilitiesClient,
+		maxBatchBlobSize:   capabilities.GetCacheCapabilities().MaxBatchTotalSizeBytes,
 	}
 
 	return &cs, nil
