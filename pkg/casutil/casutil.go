@@ -87,7 +87,12 @@ func PutBytes(
 	return digest, nil
 }
 
-func PutProto(ctx context.Context, casClient remote_pb.ContentAddressableStorageClient, m proto.Message, instanceName string) (*remote_pb.Digest, error) {
+func PutProto(
+	ctx context.Context,
+	casClient remote_pb.ContentAddressableStorageClient,
+	m proto.Message,
+	instanceName string,
+) (*remote_pb.Digest, error) {
 	data, err := proto.Marshal(m)
 	if err != nil {
 		return nil, err
@@ -96,7 +101,12 @@ func PutProto(ctx context.Context, casClient remote_pb.ContentAddressableStorage
 	return PutBytes(ctx, casClient, data, instanceName)
 }
 
-func GetBytes(ctx context.Context, casClient remote_pb.ContentAddressableStorageClient, digest *remote_pb.Digest, instanceName string) ([]byte, error) {
+func GetBytes(
+	ctx context.Context,
+	casClient remote_pb.ContentAddressableStorageClient,
+	digest *remote_pb.Digest,
+	instanceName string,
+) ([]byte, error) {
 	req := remote_pb.BatchReadBlobsRequest{
 		InstanceName: instanceName,
 		Digests:      []*remote_pb.Digest{digest},
@@ -225,4 +235,41 @@ func PutBytesStream(
 	}
 
 	return digest, nil
+}
+
+func GetBytesStream(
+	ctx context.Context,
+	client bytestream_pb.ByteStreamClient,
+	digest *remote_pb.Digest,
+	instanceName string,
+) ([]byte, error) {
+	resourceName := fmt.Sprintf(
+		"%s/blobs/%s/%d",
+		instanceName,
+		digest.GetHash(),
+		digest.GetSizeBytes())
+
+	request := bytestream_pb.ReadRequest{
+		ResourceName: resourceName,
+		ReadOffset:   0,
+		ReadLimit:    0,
+	}
+
+	readClient, err := client.Read(ctx, &request)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read digest: %s", err)
+	}
+
+	data := make([]byte, 0, digest.SizeBytes)
+
+	for {
+		response, err := readClient.Recv()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read digest: %s", err)
+		}
+
+		data = append(data, response.Data...)
+	}
+
+	return data, nil
 }
