@@ -264,6 +264,9 @@ func GetBytesStream(
 
 	for {
 		response, err := readClient.Recv()
+		if err == io.EOF {
+			break
+		}
 		if err != nil {
 			return nil, fmt.Errorf("failed to read digest: %s", err)
 		}

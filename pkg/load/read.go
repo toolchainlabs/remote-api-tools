@@ -98,8 +98,24 @@ func readBlobBatch(actionContext *ActionContext, digest *remote_pb.Digest) ([]by
 	return response.Responses[0].Data, nil
 }
 
+func readBlobStream(actionContext *ActionContext, digest *remote_pb.Digest) ([]byte, error) {
+	data, err := casutil.GetBytesStream(actionContext.Ctx, actionContext.BytestreamClient, digest, actionContext.InstanceName)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read blob (bytestream): %s", err)
+	}
+
+	return data, nil
+}
+
 func processReadWorkItem(wi *readWorkItem) *readWorkResult {
-	data, err := readBlobBatch(wi.actionContext, wi.digest)
+	var data []byte
+	var err error
+
+	if wi.digest.SizeBytes < wi.actionContext.MaxBatchBlobSize {
+		data, err = readBlobBatch(wi.actionContext, wi.digest)
+	} else {
+		data, err = readBlobStream(wi.actionContext, wi.digest)
+	}
 	if err != nil {
 		return &readWorkResult{
 			digest: wi.digest,
