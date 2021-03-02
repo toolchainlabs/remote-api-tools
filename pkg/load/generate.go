@@ -71,7 +71,7 @@ func writeBlobBatch(actionContext *ActionContext, data []byte) (*remote_pb.Diges
 }
 
 func writeBlobStream(actionContext *ActionContext, data []byte) (*remote_pb.Digest, error) {
-	digest, err := casutil.PutBytesStream(actionContext.Ctx, actionContext.BytestreamClient, data, actionContext.StreamChunkSize,
+	digest, err := casutil.PutBytesStream(actionContext.Ctx, actionContext.BytestreamClient, data, actionContext.WriteChunkSize,
 		actionContext.InstanceName)
 	if err != nil {
 		return nil, fmt.Errorf("failed to write blob (bytestream) %s", err)
