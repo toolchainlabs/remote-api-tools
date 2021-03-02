@@ -32,6 +32,8 @@ type ActionContext struct {
 	CasClient        remote_pb.ContentAddressableStorageClient
 	BytestreamClient bytestream_pb.ByteStreamClient
 	InstanceName     string
+	MaxBatchBlobSize int64
+	StreamChunkSize  int64
 
 	// Map of a digest in string form to a bool representing whether it is known to be present or missing
 	// in the CAS.

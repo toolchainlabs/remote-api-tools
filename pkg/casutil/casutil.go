@@ -19,9 +19,13 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"io"
 
 	"github.com/golang/protobuf/proto"
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
+	bytestream_pb "google.golang.org/genproto/googleapis/bytestream"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -36,7 +40,12 @@ func ComputeDigest(data []byte) *remote_pb.Digest {
 	}
 }
 
-func PutBytes(ctx context.Context, casClient remote_pb.ContentAddressableStorageClient, data []byte, instanceName string) (*remote_pb.Digest, error) {
+func PutBytes(
+	ctx context.Context,
+	casClient remote_pb.ContentAddressableStorageClient,
+	data []byte,
+	instanceName string,
+) (*remote_pb.Digest, error) {
 	digest := ComputeDigest(data)
 
 	req1 := remote_pb.FindMissingBlobsRequest{
@@ -138,4 +147,82 @@ func FindMissingBlobs(
 	}
 
 	return response.MissingBlobDigests, nil
+}
+
+func PutBytesStream(
+	ctx context.Context,
+	client bytestream_pb.ByteStreamClient,
+	data []byte,
+	chunkSize int64,
+	instanceName string,
+) (*remote_pb.Digest, error) {
+	digest := ComputeDigest(data)
+
+	writeClient, err := client.Write(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var writeOffset int64
+
+	id, err := uuid.NewRandom()
+	if err != nil {
+		return nil, err
+	}
+
+	resourceName := fmt.Sprintf(
+		"%s/uploads/%s/blobs/%s/%d",
+		instanceName,
+		id.String(),
+		digest.GetHash(),
+		digest.GetSizeBytes())
+	includeResourceName := true
+
+	for {
+		request := bytestream_pb.WriteRequest{
+			WriteOffset: writeOffset,
+		}
+
+		if includeResourceName {
+			request.ResourceName = resourceName
+			includeResourceName = false
+		}
+
+		writeEndOffset := writeOffset + chunkSize
+		if writeEndOffset > int64(len(data)) {
+			writeEndOffset = int64(len(data))
+			request.FinishWrite = true
+		}
+
+		request.Data = data[writeOffset:writeEndOffset]
+
+		log.WithFields(log.Fields{
+			"resource_name": request.ResourceName,
+			"write_offset":  request.WriteOffset,
+			"finish_write":  request.FinishWrite,
+			"data_length":   len(request.Data),
+		}).Trace("bytestream write request")
+
+		err = writeClient.Send(&request)
+		if err != nil {
+			return nil, fmt.Errorf("failed to write chunk: %s", err)
+		}
+
+		writeOffset += int64(len(request.Data))
+
+		if request.FinishWrite {
+			break
+		}
+	}
+
+	response, err := writeClient.CloseAndRecv()
+	if err != nil && err != io.EOF {
+		return nil, fmt.Errorf("failed to write digest: %s", err)
+	}
+
+	if response.CommittedSize != int64(len(data)) {
+		return nil, fmt.Errorf("failed to write digest: %s", err)
+	}
+
+	return digest, nil
 }
