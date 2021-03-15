@@ -19,3 +19,13 @@ jobs:
         with:
           go-version: '^1.14.9'
       - run: scripts/ci.sh
+      - name: Build smoketest docker image
+        uses: docker/build-push-action@v2
+        with:
+          tags: smoketest:ci
+          build-args: APP_NAME=smoketest
+      - name: Build casload docker image
+        uses: docker/build-push-action@v2
+        with:
+          tags: casload:ci
+          build-args: APP_NAME=casload
