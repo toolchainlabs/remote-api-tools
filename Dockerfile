@@ -1,7 +1,8 @@
-FROM golang:1.15.10-alpine3.13
+FROM golang:1.15.10-alpine3.13 AS builder
+ARG APP_NAME
 RUN apk add --update bash curl git && rm /var/cache/apk/*
 
-WORKDIR /app
+WORKDIR /build
 
 COPY go.mod .
 COPY go.sum .
@@ -9,8 +10,12 @@ COPY go.sum .
 RUN go mod download
 
 COPY . .
-WORKDIR cmd/smoketest
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /usr/local/bin/smoketest
+WORKDIR cmd/${APP_NAME}
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ../../app
 
-WORKDIR ../casload
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /usr/local/bin/casload
+FROM alpine:3.13.2
+WORKDIR /root/
+COPY --from=builder /build/app /usr/local/bin/
+
+ENTRYPOINT ["app"] 
+CMD ["--help"]
