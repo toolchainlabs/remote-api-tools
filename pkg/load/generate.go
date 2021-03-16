@@ -17,12 +17,13 @@ package load
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/toolchainlabs/remote-api-tools/pkg/retry"
 	"math/rand"
 	"strconv"
 	"time"
 
 	"github.com/toolchainlabs/remote-api-tools/pkg/casutil"
+	"github.com/toolchainlabs/remote-api-tools/pkg/retry"
+	"github.com/toolchainlabs/remote-api-tools/pkg/stats"
 	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
 )
 
@@ -52,12 +53,16 @@ type generateWorkItem struct {
 type generateWorkResult struct {
 	blobSize int
 	err      error
+	elapsed  time.Duration
 }
 
 func generateWorker(workChan <-chan *generateWorkItem, resultChan chan<- *generateWorkResult) {
 	log.Debug("generateWorker started")
 	for wi := range workChan {
-		resultChan <- processWorkItem(wi)
+		startTime := time.Now()
+		result := processWorkItem(wi)
+		result.elapsed = time.Now().Sub(startTime)
+		resultChan <- result
 	}
 	log.Debug("generateWorker stopped")
 }
@@ -160,6 +165,8 @@ func (g *generateAction) RunAction(actionContext *ActionContext) error {
 		close(workChan)
 	}()
 
+	elapsedTimes := make([]time.Duration, g.numRequests)
+
 	for i := 0; i < g.numRequests; i++ {
 		r := <-resultChan
 		if r.err == nil {
@@ -171,9 +178,10 @@ func (g *generateAction) RunAction(actionContext *ActionContext) error {
 				"err":  r.err.Error(),
 			}).Error("request error")
 		}
+		elapsedTimes[i] = r.elapsed
 
-		if i%10 == 0 {
-			log.Infof("progress: %d / %d", i, g.numRequests)
+		if i%100 == 0 {
+			log.Debugf("progress: %d / %d", i, g.numRequests)
 		}
 	}
 
@@ -188,6 +196,8 @@ func (g *generateAction) RunAction(actionContext *ActionContext) error {
 		result.success,
 		result.errors,
 	)
+
+	stats.PrintTimingStats(elapsedTimes)
 
 	return nil
 }
