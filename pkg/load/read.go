@@ -17,14 +17,15 @@ package load
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
+	"math/rand"
+	"strconv"
+	"time"
+
 	"github.com/toolchainlabs/remote-api-tools/pkg/casutil"
 	"github.com/toolchainlabs/remote-api-tools/pkg/stats"
 	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"math/rand"
-	"strconv"
-	"time"
 )
 
 // This action uses the known digests of the current run to schedule read requests to the CAS.

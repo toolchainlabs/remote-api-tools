@@ -17,13 +17,13 @@ package load
 import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
-	"github.com/toolchainlabs/remote-api-tools/pkg/retry"
-	"github.com/toolchainlabs/remote-api-tools/pkg/stats"
 	"math/rand"
 	"strconv"
 	"time"
 
 	"github.com/toolchainlabs/remote-api-tools/pkg/casutil"
+	"github.com/toolchainlabs/remote-api-tools/pkg/retry"
+	"github.com/toolchainlabs/remote-api-tools/pkg/stats"
 	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
 )
 
