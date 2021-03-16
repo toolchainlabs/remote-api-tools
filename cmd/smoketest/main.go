@@ -19,6 +19,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"sort"
 	"strconv"
 	"strings"
@@ -38,6 +39,8 @@ import (
 	"google.golang.org/grpc/keepalive"
 	"google.golang.org/grpc/status"
 )
+
+const version string = "0.1.0"
 
 func makeCommand(
 	now string,
@@ -589,6 +592,7 @@ func parallelSmokeTest(
 }
 
 func main() {
+	versionOpt := pflag.BoolP("version", "V", false, "display version and exit")
 	remoteOpt := pflag.StringP("remote", "r", "", "remote server")
 	executionServerOpt := pflag.String("execution-server", "", "execution server")
 	casServerOpt := pflag.String("cas-server", "", "CAS server")
@@ -604,6 +608,11 @@ func main() {
 	parallelModeOpt := pflag.Int("parallel", 1, "enable parallel mode")
 
 	pflag.Parse()
+
+	if *versionOpt {
+		fmt.Println(version)
+		os.Exit(0)
+	}
 
 	if *useJsonLoggingOpt {
 		log.SetFormatter(&log.JSONFormatter{})

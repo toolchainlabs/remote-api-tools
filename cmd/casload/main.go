@@ -16,9 +16,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/toolchainlabs/remote-api-tools/pkg/load"
 	"io/ioutil"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
@@ -26,9 +28,12 @@ import (
 	"github.com/spf13/pflag"
 )
 
+const version string = "0.1.0"
+
 func main() {
 	rand.Seed(time.Now().Unix())
 
+	versionOpt := pflag.BoolP("version", "V", false, "display version and exit")
 	remoteOpt := pflag.StringP("remote", "r", "", "remote server")
 	authTokenFileOpt := pflag.StringP("auth-token-file", "a", "", "auth bearer token to use")
 	secureOpt := pflag.BoolP("secure", "s", false, "enable secure mode (TLS)")
@@ -40,6 +45,11 @@ func main() {
 	maxBatchBlobSize := pflag.Int64("max-batch-blob-size", 512*1024, "maximum number of bytes per blob permitted to use BatchUpdateBlobs")
 
 	pflag.Parse()
+
+	if *versionOpt {
+		fmt.Println(version)
+		os.Exit(0)
+	}
 
 	if *useJsonLoggingOpt {
 		log.SetFormatter(&log.JSONFormatter{})
