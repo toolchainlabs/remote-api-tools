@@ -18,6 +18,7 @@ import (
 	"fmt"
 	log "github.com/sirupsen/logrus"
 	"github.com/toolchainlabs/remote-api-tools/pkg/casutil"
+	"github.com/toolchainlabs/remote-api-tools/pkg/stats"
 	remote_pb "github.com/toolchainlabs/remote-api-tools/protos/build/bazel/remote/execution/v2"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -51,14 +52,18 @@ type readWorkItem struct {
 }
 
 type readWorkResult struct {
-	digest *remote_pb.Digest
-	err    error
+	digest  *remote_pb.Digest
+	err     error
+	elapsed time.Duration
 }
 
 func readWorker(workChan <-chan *readWorkItem, resultChan chan<- *readWorkResult) {
 	log.Debug("readWorker started")
 	for wi := range workChan {
-		resultChan <- processReadWorkItem(wi)
+		startTime := time.Now()
+		result := processReadWorkItem(wi)
+		result.elapsed = time.Now().Sub(startTime)
+		resultChan <- result
 	}
 	log.Debug("readWorker stopped")
 }
@@ -187,6 +192,8 @@ func (self *readAction) RunAction(actionContext *ActionContext) error {
 		close(workChan)
 	}()
 
+	elapsedTimes := make([]time.Duration, len(workItems))
+
 	// Wait for results.
 	for i := 0; i < len(workItems); i++ {
 		r := <-resultChan
@@ -199,9 +206,10 @@ func (self *readAction) RunAction(actionContext *ActionContext) error {
 				"err":    r.err.Error(),
 			}).Error("request error")
 		}
+		elapsedTimes[i] = r.elapsed
 
-		if i%10 == 0 {
-			log.Infof("progress: %d / %d", i, len(workItems))
+		if i%100 == 0 {
+			log.Debugf("progress: %d / %d", i, len(workItems))
 		}
 	}
 
@@ -216,6 +224,8 @@ func (self *readAction) RunAction(actionContext *ActionContext) error {
 		result.success,
 		result.errors,
 	)
+
+	stats.PrintTimingStats(elapsedTimes)
 
 	return nil
 }
