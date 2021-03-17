@@ -18,8 +18,7 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         build-args: APP_NAME=smoketest
-        name: toolchainlabs/remote-api-tools-smoketest:nighly
-        tag_semver: true
+        tags: toolchainlabs/remote-api-tools-smoketest:nighly
         push: true
     - name: Image digest
       run: echo ${{ steps.docker_build_smoketest.outputs.digest }}
