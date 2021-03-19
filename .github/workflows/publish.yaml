@@ -18,7 +18,16 @@ jobs:
       uses: docker/build-push-action@v2
       with:
         build-args: APP_NAME=smoketest
-        tags: toolchainlabs/remote-api-tools-smoketest:nighly
+        tags: toolchainlabs/remote-api-tools-smoketest:nightly
         push: true
-    - name: Image digest
+    - name: smoketest image digest
       run: echo ${{ steps.docker_build_smoketest.outputs.digest }}
+    - name: Build & Publish nightly casload
+      id: docker_build_casload
+      uses: docker/build-push-action@v2
+      with:
+        build-args: APP_NAME=casload
+        tags: toolchainlabs/remote-api-tools-casload:nightly
+        push: true
+    - name: casload image digest
+      run: echo ${{ steps.docker_build_casload.outputs.digest }}
