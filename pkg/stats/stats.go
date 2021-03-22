@@ -36,5 +36,5 @@ func PrintTimingStats(times []time.Duration) {
 		total,
 		average,
 		times[0],
-		times[len(times)])
+		times[len(times)-1])
 }
