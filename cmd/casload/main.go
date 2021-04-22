@@ -36,6 +36,7 @@ func main() {
 	versionOpt := pflag.BoolP("version", "V", false, "display version and exit")
 	remoteOpt := pflag.StringP("remote", "r", "", "remote server")
 	authTokenFileOpt := pflag.StringP("auth-token-file", "a", "", "auth bearer token to use")
+	authTokenEnvOpt := pflag.StringP("auth-token-env", "A", "", "name of environment variable with auth bearer token")
 	secureOpt := pflag.BoolP("secure", "s", false, "enable secure mode (TLS)")
 	instanceNameOpt := pflag.StringP("instance-name", "i", "", "instance name")
 	verboseOpt := pflag.CountP("verbose", "v", "increase logging verbosity")
@@ -69,6 +70,10 @@ func main() {
 		log.Fatal("benchmark programs must be specified")
 	}
 
+	if *authTokenFileOpt != "" && *authTokenEnvOpt != "" {
+		log.Fatalf("--auth-token-file and --auth-token-env are mutually exclusive")
+	}
+
 	authToken := ""
 	if *authTokenFileOpt != "" {
 		authTokenBytes, err := ioutil.ReadFile(*authTokenFileOpt)
@@ -76,6 +81,12 @@ func main() {
 			log.Fatalf("unable to read auth token from %s: %s", *authTokenFileOpt, err)
 		}
 		authToken = strings.TrimSpace(string(authTokenBytes))
+	} else if *authTokenEnvOpt != "" {
+		envValue := os.Getenv(*authTokenEnvOpt)
+		if envValue == "" {
+			log.Fatalf("environment variable %s was either unset or empty", *authTokenEnvOpt)
+		}
+		authToken = strings.TrimSpace(envValue)
 	}
 
 	if *verboseOpt > 1 {
