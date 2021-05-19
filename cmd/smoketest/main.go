@@ -597,6 +597,7 @@ func main() {
 	executionServerOpt := pflag.String("execution-server", "", "execution server")
 	casServerOpt := pflag.String("cas-server", "", "CAS server")
 	authTokenFileOpt := pflag.StringP("auth-token-file", "a", "", "auth bearer token to use")
+	authTokenEnvOpt := pflag.StringP("auth-token-env", "A", "", "name of environment variable with auth bearer token")
 	secureOpt := pflag.BoolP("secure", "s", false, "enable secure mode (TLS)")
 	instanceNameOpt := pflag.StringP("instance-name", "i", "", "instance name")
 	timeoutSecsOpt := pflag.UintP("timeout-secs", "t", 0, "timeout in seconds")
@@ -651,6 +652,12 @@ func main() {
 			log.Fatalf("unable to read auth token from %s: %s", *authTokenFileOpt, err)
 		}
 		authToken = strings.TrimSpace(string(authTokenBytes))
+	} else if *authTokenEnvOpt != "" {
+		envValue := os.Getenv(*authTokenEnvOpt)
+		if envValue == "" {
+			log.Fatalf("environment variable %s was either unset or empty", *authTokenEnvOpt)
+		}
+		authToken = strings.TrimSpace(envValue)
 	}
 
 	if *verboseOpt > 1 {
