@@ -1,0 +1,13 @@
+[GLOBAL]
+pants_version = "2.7.0.dev4"
+backend_packages.add = [
+  "pants.backend.experimental.go",
+  "pants.backend.experimental.go.lint.gofmt",
+]
+
+[source]
+root_patterns = ["/"]
+
+[anonymous-telemetry]
+enabled = true
+repo_id = "E6C010FF-E41B-4AFE-9B6C-05F85B219046"
