@@ -1,3 +1,1 @@
-go_module(
-    name="root",
-)
+go_module()
