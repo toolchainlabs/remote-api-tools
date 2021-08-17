@@ -2,7 +2,7 @@
 .idea
 *.iml
 
-# Pants files
+# Pants
 .pants.d
 .pids
 
