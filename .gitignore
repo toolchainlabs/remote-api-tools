@@ -1,3 +1,11 @@
 # Ignore IntelliJ project files.
 .idea
 *.iml
+
+# Pants files
+.pants.d
+.pids
+
+# TODO: Figure out why these are created in source root and not sandbox.
+/cache
+/gopath
