@@ -39,6 +39,7 @@ func main() {
 	authTokenEnvOpt := pflag.StringP("auth-token-env", "A", "", "name of environment variable with auth bearer token")
 	secureOpt := pflag.BoolP("secure", "s", false, "enable secure mode (TLS)")
 	instanceNameOpt := pflag.StringP("instance-name", "i", "", "instance name")
+	instanceNameFromEnvOpt := pflag.StringP("instance-from-env", "I", "", "instance name from given environment variable")
 	verboseOpt := pflag.CountP("verbose", "v", "increase logging verbosity")
 	useJsonLoggingOpt := pflag.Bool("log-json", false, "log using JSON")
 	allowInsecureAuthOpt := pflag.Bool("allow-insecure-auth", false, "allow credentials to be passed unencrypted (i.e., no TLS)")
@@ -89,6 +90,15 @@ func main() {
 		authToken = strings.TrimSpace(envValue)
 	}
 
+	instanceName := ""
+	if *instanceNameOpt != "" && *instanceNameFromEnvOpt != "" {
+		log.Fatal("--instance and --instance-from-env are mutually exclusive")
+	} else if *instanceNameOpt != "" {
+		instanceName = *instanceNameOpt
+	} else if *instanceNameFromEnvOpt != "" {
+		instanceName = os.Getenv(*instanceNameFromEnvOpt)
+	}
+
 	if *verboseOpt > 1 {
 		log.SetLevel(log.TraceLevel)
 	} else if *verboseOpt == 1 {
@@ -106,14 +116,14 @@ func main() {
 
 	ctx := context.Background()
 
-	cs, err := setupClients(ctx, *remoteOpt, *instanceNameOpt, *secureOpt, *allowInsecureAuthOpt, authToken)
+	cs, err := setupClients(ctx, *remoteOpt, instanceName, *secureOpt, *allowInsecureAuthOpt, authToken)
 	if err != nil {
 		log.Fatalf("failed to setup connection: %s", err)
 	}
 	defer cs.Close()
 
 	actionContext := load.ActionContext{
-		InstanceName:     *instanceNameOpt,
+		InstanceName:     instanceName,
 		CasClient:        cs.casClient,
 		BytestreamClient: cs.bytestreamClient,
 		Ctx:              ctx,

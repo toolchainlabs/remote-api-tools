@@ -600,6 +600,7 @@ func main() {
 	authTokenEnvOpt := pflag.StringP("auth-token-env", "A", "", "name of environment variable with auth bearer token")
 	secureOpt := pflag.BoolP("secure", "s", false, "enable secure mode (TLS)")
 	instanceNameOpt := pflag.StringP("instance-name", "i", "", "instance name")
+	instanceNameFromEnvOpt := pflag.StringP("instance-from-env", "I", "", "instance name from given environment variable")
 	timeoutSecsOpt := pflag.UintP("timeout-secs", "t", 0, "timeout in seconds")
 	delaySecsOpt := pflag.UintP("delay", "d", 0, "delay on remote execution")
 	verboseOpt := pflag.CountP("verbose", "v", "increase logging verbosity")
@@ -660,6 +661,15 @@ func main() {
 		authToken = strings.TrimSpace(envValue)
 	}
 
+	instanceName := ""
+	if *instanceNameOpt != "" && *instanceNameFromEnvOpt != "" {
+		log.Fatal("--instance and --instance-from-env are mutually exclusive")
+	} else if *instanceNameOpt != "" {
+		instanceName = *instanceNameOpt
+	} else if *instanceNameFromEnvOpt != "" {
+		instanceName = os.Getenv(*instanceNameFromEnvOpt)
+	}
+
 	if *verboseOpt > 1 {
 		log.SetLevel(log.TraceLevel)
 	} else if *verboseOpt == 1 {
@@ -681,12 +691,12 @@ func main() {
 	defer cs.Close()
 
 	if *parallelModeOpt < 2 {
-		err = smokeTest(ctx, cs, *instanceNameOpt, *platformPropertiesOpt, *delaySecsOpt, map[string]string{}, map[string]interface{}{})
+		err = smokeTest(ctx, cs, instanceName, *platformPropertiesOpt, *delaySecsOpt, map[string]string{}, map[string]interface{}{})
 		if err != nil {
 			log.Fatalf("smoke test failed: %s", err)
 		}
 	} else {
-		err = parallelSmokeTest(ctx, cs, *instanceNameOpt, *platformPropertiesOpt, *parallelModeOpt, *delaySecsOpt)
+		err = parallelSmokeTest(ctx, cs, instanceName, *platformPropertiesOpt, *parallelModeOpt, *delaySecsOpt)
 		if err != nil {
 			log.Fatalf("parallel smoke test failed: %s", err)
 		}
