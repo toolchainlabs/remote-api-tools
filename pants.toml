@@ -4,6 +4,9 @@ backend_packages.add = [
   "pants.backend.experimental.go",
   "pants.backend.experimental.go.lint.gofmt",
 ]
+plugins = [
+  "toolchain.pants.plugin==0.13.1",
+]
 
 [source]
 root_patterns = ["/"]
@@ -11,3 +14,9 @@ root_patterns = ["/"]
 [anonymous-telemetry]
 enabled = true
 repo_id = "E6C010FF-E41B-4AFE-9B6C-05F85B219046"
+
+[toolchain-setup]
+repo = "remote-api-tools"
+
+[buildsense]
+enable = true
