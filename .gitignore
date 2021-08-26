@@ -5,6 +5,7 @@
 # Pants
 .pants.d
 .pids
+dist/
 
 # TODO: Figure out why these are created in source root and not sandbox.
 /cache
