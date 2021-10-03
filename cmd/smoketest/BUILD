@@ -2,6 +2,6 @@ go_package()
 
 go_binary(
   name="bin",
-  binary_name="smoketest",
+  output_path="smoketest",
   main=":smoketest",
 )

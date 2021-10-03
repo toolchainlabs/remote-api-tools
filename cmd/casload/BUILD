@@ -2,6 +2,6 @@ go_package()
 
 go_binary(
   name="bin",
-  binary_name="casload",
+  output_path="casload",
   main=":casload",
 )

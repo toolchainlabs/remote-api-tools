@@ -1,3 +1,3 @@
-go_module(
+go_mod(
     name="root",
 )
