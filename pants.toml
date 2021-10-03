@@ -17,9 +17,6 @@ repo_id = "E6C010FF-E41B-4AFE-9B6C-05F85B219046"
 [toolchain-setup]
 repo = "remote-api-tools"
 
-[buildsense]
-enable = true
-
 [golang]
 expected_version = "1.17"
 
