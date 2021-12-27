@@ -1,4 +1,5 @@
 go_binary(
-  name="bin",
-  output_path="smoketest",
+    name="bin",
 )
+
+go_package()
