@@ -1,0 +1,5 @@
+# See https://www.pantsbuild.org/docs/using-pants-in-ci.
+
+[GLOBAL]
+dynamic_ui = false
+colors = true
