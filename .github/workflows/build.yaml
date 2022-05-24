@@ -1,12 +1,14 @@
 name: CI
-
 # Trigger this workflow on any push (to main) or pull request.
 on:
+  workflow_call:
+    secrets:
+      TOOLCHAIN_AUTH_TOKEN:
+        required: true
   push:
     branches:
       - main
-  pull_request:
-
+  pull_request: {}
 jobs:
   build:
     name: Build and test
@@ -17,8 +19,25 @@ jobs:
       - uses: actions/checkout@v3
       - uses: actions/setup-go@v3
         with:
-          go-version: '^1.14.9'
-      - run: scripts/ci.sh
+          go-version: '^1.17.8'
+      - name: Cache pants
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-${{ hashFiles('pants*toml') }}-v2
+          path: |
+             ~/.cache/pants/setup
+      - name: Set env vars
+        run: |
+          echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
+          echo 'TOOLCHAIN_AUTH_TOKEN=${{ secrets.TOOLCHAIN_AUTH_TOKEN }}' >> ${GITHUB_ENV}
+      - name: Pants Bootstrap
+        run: ./pants version
+      - name: Lint & check
+        run: |
+          ./pants lint check ::
+      - name: Tests
+        run: |
+          ./pants test ::
       - name: Build smoketest docker image
         uses: docker/build-push-action@v3
         with:
