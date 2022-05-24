@@ -2,11 +2,15 @@ name: CI
 
 # Trigger this workflow on any push (to main) or pull request.
 on:
+  workflow_call:
+    secrets:
+      TOOLCHAIN_AUTH_TOKEN:
+        description: 'A token passed from the caller workflow'
+        required: false
   push:
     branches:
       - main
-  pull_request:
-
+  pull_request: {}
 jobs:
   build:
     name: Build and test
