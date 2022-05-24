@@ -14,18 +14,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
-      - uses: actions/setup-go@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-go@v3
         with:
           go-version: '^1.14.9'
       - run: scripts/ci.sh
       - name: Build smoketest docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           tags: smoketest:ci
           build-args: APP_NAME=smoketest
       - name: Build casload docker image
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           tags: casload:ci
           build-args: APP_NAME=casload
