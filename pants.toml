@@ -7,6 +7,14 @@ backend_packages.add = [
 plugins = [
   "toolchain.pants.plugin==0.19.0",
 ]
+# Caching is disabled by default so that desktop builds are not cached. CI caching is enabled in pants.ci.toml.
+remote_cache_read = false
+remote_cache_write = false
+# We want to continue to get logs when remote caching errors.
+remote_cache_warnings = "backoff"
+remote_store_address = "grpcs://cache.toolchain.com:443"
+remote_instance_name = "main"
+remote_auth_plugin = "toolchain.pants.auth.plugin:toolchain_auth_plugin"
 
 [source]
 root_patterns = ["/"]
