@@ -1,10 +1,11 @@
 [GLOBAL]
-pants_version = "2.11.0.dev3"
+pants_version = "2.13.0.dev3"
+use_deprecated_directory_cli_args_semantics = false
 backend_packages.add = [
   "pants.backend.experimental.go",
 ]
 plugins = [
-  "toolchain.pants.plugin==0.17.0",
+  "toolchain.pants.plugin==0.19.0",
 ]
 
 [source]
@@ -19,5 +20,5 @@ org = "toolchainlabs"
 repo = "remote-api-tools"
 
 [golang]
-expected_version = "1.17"
+minimum_expected_version = "1.17"
 
