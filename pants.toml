@@ -30,3 +30,5 @@ repo = "remote-api-tools"
 [golang]
 minimum_expected_version = "1.17"
 
+[buildsense]
+collect_platform_data = true
