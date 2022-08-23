@@ -4,7 +4,7 @@ backend_packages.add = [
   "pants.backend.experimental.go",
 ]
 plugins = [
-  "toolchain.pants.plugin==0.21.0",
+  "toolchain.pants.plugin==0.22.0",
 ]
 # Caching is disabled by default so that desktop builds are not cached. CI caching is enabled in pants.ci.toml.
 remote_cache_read = false

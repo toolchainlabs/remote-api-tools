@@ -23,7 +23,7 @@ pythonpath=(
 )
 
 plugins=(
-  "toolchain.pants.plugin==0.21.0"
+  "toolchain.pants.plugin==0.22.0"
 )
 
 function string_list() {
