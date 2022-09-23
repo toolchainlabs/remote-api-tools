@@ -1,3 +1,1 @@
-go_mod(
-    name="root",
-)
+go_mod(name="root")
