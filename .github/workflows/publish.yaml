@@ -31,4 +31,3 @@ jobs:
     - name: Build & Publish nightly smoketest
       run: |
         ./pants publish cmd/::
-      
