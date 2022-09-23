@@ -31,9 +31,6 @@ minimum_expected_version = "1.17"
 [buildsense]
 collect_platform_data = true
 
-[docker]
-default_repository = "toolchainlabs/remote-api-tools-{name}"
-
 [docker.registries.dockerhub]
 address = "hub.docker.com"
 default = true
