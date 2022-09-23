@@ -30,3 +30,8 @@ minimum_expected_version = "1.17"
 
 [buildsense]
 collect_platform_data = true
+
+[docker.registries.dockerhub]
+address = "hub.docker.com"
+default = true
+extra_image_tags = ["nightly"]

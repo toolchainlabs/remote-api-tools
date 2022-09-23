@@ -7,6 +7,7 @@ go_binary(
 docker_image(
     name="smoketest",
     dependencies=[":bin"],
+    repository="toolchainlabs/remote-api-tools-smoketest",
     instructions=[
         "FROM alpine:3.13.2",
         "COPY smoketest /usr/local/bin/",
