@@ -1,4 +1,4 @@
-go_package(name="src")
+go_package()
 
 go_binary(
     name="bin",
@@ -6,7 +6,7 @@ go_binary(
 )
 
 docker_image(
-    name="casload",
+    name="casload-docker",
     dependencies=[":bin"],
     repository="toolchainlabs/remote-api-tools-docker",
     instructions=[
