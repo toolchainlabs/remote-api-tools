@@ -34,4 +34,4 @@ collect_platform_data = true
 [docker.registries.dockerhub]
 address = "hub.docker.com"
 default = true
-extra_image_tags = ["nighly"]
+extra_image_tags = ["nightly"]
