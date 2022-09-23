@@ -1,0 +1,34 @@
+name: Publish to DockerHub using Pants
+on:
+  push:
+    branches:
+      - main
+      - puddy
+jobs:
+  publish-dockerhub-pants:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-go@v3
+      with:
+          go-version: '^1.17.8'
+    - name: Login to DockerHub
+      uses: docker/login-action@v1 
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+    - name: Cache pants
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-${{ hashFiles('pants*toml') }}-v2
+        path: |
+            ~/.cache/pants/setup
+    - name: Set env vars
+      run: |
+          echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
+          echo 'TOOLCHAIN_AUTH_TOKEN=${{ secrets.TOOLCHAIN_AUTH_TOKEN }}' >> ${GITHUB_ENV}
+    - name: Pants Bootstrap
+      run: ./pants version
+    - name: Build & Publish nightly smoketest
+      run: |
+        ./pants publish cmd/::
