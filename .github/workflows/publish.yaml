@@ -8,26 +8,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - uses: actions/setup-go@v3
+      with:
+          go-version: '^1.17.8'
     - name: Login to DockerHub
       uses: docker/login-action@v1 
       with:
         username: ${{ secrets.DOCKER_USERNAME }}
         password: ${{ secrets.DOCKER_ACCESS_TOKEN }}
+    - name: Cache pants
+      uses: actions/cache@v2
+      with:
+        key: ${{ runner.os }}-${{ hashFiles('pants*toml') }}-v2
+        path: |
+            ~/.cache/pants/setup
+    - name: Set env vars
+      run: |
+          echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
+          echo 'TOOLCHAIN_AUTH_TOKEN=${{ secrets.TOOLCHAIN_AUTH_TOKEN }}' >> ${GITHUB_ENV}
+    - name: Pants Bootstrap
+      run: ./pants version
     - name: Build & Publish nightly smoketest
-      id: docker_build_smoketest
-      uses: docker/build-push-action@v2
-      with:
-        build-args: APP_NAME=smoketest
-        tags: toolchainlabs/remote-api-tools-smoketest:nightly
-        push: true
-    - name: smoketest image digest
-      run: echo ${{ steps.docker_build_smoketest.outputs.digest }}
-    - name: Build & Publish nightly casload
-      id: docker_build_casload
-      uses: docker/build-push-action@v2
-      with:
-        build-args: APP_NAME=casload
-        tags: toolchainlabs/remote-api-tools-casload:nightly
-        push: true
-    - name: casload image digest
-      run: echo ${{ steps.docker_build_casload.outputs.digest }}
+      run: |
+        ./pants publish cmd/::
