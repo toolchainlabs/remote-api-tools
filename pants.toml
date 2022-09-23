@@ -31,6 +31,9 @@ minimum_expected_version = "1.17"
 [buildsense]
 collect_platform_data = true
 
+[docker]
+env_vars = ["DOCKER_CONFIG=%(homedir)s/.docker/config.json"]
+tools = ["docker"]
 [docker.registries.dockerhub]
 address = "registry.hub.docker.com"
 default = true
