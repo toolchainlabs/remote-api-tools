@@ -38,6 +38,10 @@ jobs:
       - name: Tests
         run: |
           ./pants test ::
+      - name: Build smoketest & casloader docker images
+        run: |
+          ./pants package cmd/::
+      # Keeping those here since the publish workflow wasn't ported to use pants.
       - name: Build smoketest docker image
         uses: docker/build-push-action@v3
         with:
