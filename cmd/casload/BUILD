@@ -1,4 +1,4 @@
-go_package()
+go_package(name="src")
 
 go_binary(
     name="bin",
@@ -6,7 +6,7 @@ go_binary(
 )
 
 docker_image(
-    name="casload-docker",
+    name="casload",
     dependencies=[":bin"],
     instructions=[
         "FROM alpine:3.13.2",
