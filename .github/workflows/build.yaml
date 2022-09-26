@@ -28,8 +28,8 @@ jobs:
         run: |
           echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
           echo 'TOOLCHAIN_AUTH_TOKEN=${{ secrets.TOOLCHAIN_AUTH_TOKEN }}' >> ${GITHUB_ENV}
-      - name: Pants Bootstrap
-        run: ./pants version
+      - name: Pants Bootstrap & show toolchain token
+        run: ./pants version && ./pants auth-token-info --auth-token-info-verbose
       - name: Lint & check
         run: |
           ./pants lint check ::
