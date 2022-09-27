@@ -6,7 +6,7 @@ backend_packages.add = [
   "pants.backend.docker",
 ]
 plugins = [
-  "toolchain.pants.plugin==0.22.0",
+  "toolchain.pants.plugin==0.23.0",
 ]
 # Caching is disabled by default so that desktop builds are not cached. CI caching is enabled in pants.ci.toml.
 remote_cache_read = false

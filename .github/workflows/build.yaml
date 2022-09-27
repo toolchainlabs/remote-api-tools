@@ -30,6 +30,9 @@ jobs:
           echo 'TOOLCHAIN_AUTH_TOKEN=${{ secrets.TOOLCHAIN_AUTH_TOKEN }}' >> ${GITHUB_ENV}
       - name: Pants Bootstrap
         run: ./pants version
+      - name:  show toolchain token
+        if: github.event_name == 'push'
+        run: ./pants auth-token-info --auth-token-info-verbose
       - name: Lint & check
         run: |
           ./pants lint check ::
