@@ -1,0 +1,49 @@
+name: Check Toolchain Token
+on:
+  workflow_dispatch: # Allow running on-demand
+  schedule: # Monday to Friday at 4pm UTC, 2pm PST, 12pm (noon) EDT
+    - cron: 0 16 * * MON-FRI
+jobs:
+  check-toolchain-token:
+    name: Check Toolchain Token
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        python-version: ["3.9"]
+        os: [ubuntu-latest]
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up Python 3.9.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.9.12"
+      - uses: actions/setup-go@v3
+        with:
+          go-version: '1.18'
+      - name: Cache pants
+        uses: actions/cache@v3
+        with:
+          key: ${{ runner.os }}-${{ hashFiles('pants*toml') }}-v2
+          path: |
+             ~/.cache/pants/setup
+      - name: Set env vars
+        run: |
+          echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
+          echo 'TOOLCHAIN_AUTH_TOKEN=${{ secrets.TOOLCHAIN_AUTH_TOKEN }}' >> ${GITHUB_ENV}
+      - name: Bootstrap Pants
+        run: ./pants version
+      - name: Show token info
+        run: ./pants auth-token-info
+      - name: Check token
+        run: ./pants auth-token-check --auth-token-check-threshold=14
+      - name: Notify slack on failure
+        if: failure()
+        # rtCamp/action-slack-notify@v2.2.0 - pinned it a git hash for maximum safety
+        # https://github.com/rtCamp/action-slack-notify/releases/tag/v2.2.0
+        uses: rtCamp/action-slack-notify@12e36fc18b0689399306c2e0b3e0f2978b7f1ee7
+        env:
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+          SLACK_COLOR: red
+          SLACK_TITLE: Toolchain auth token expires soon
+          SLACK_MESSAGE: "The Toolchain auth token used with Github Action CI remote-api-tools repo workflows is about to expire. generate a new token and update it in the repo secrets UI."
+          SLACK_CHANNEL: "devops"
