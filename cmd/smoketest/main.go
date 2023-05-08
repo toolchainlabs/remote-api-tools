@@ -15,6 +15,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/tls"
 	"fmt"
@@ -101,7 +102,7 @@ func makeCommand(
 		return cmp2 < 0
 	})
 
-	shellCommand := fmt.Sprintf("echo $NOW > foobar && mkdir -p xyzzy && echo $NOW > xyzzy/result %s", delayCmd)
+	shellCommand := fmt.Sprintf("echo 'This is stdout.' && echo 'This is stderr.' 1>&2 && echo $NOW > foobar && mkdir -p xyzzy && echo $NOW > xyzzy/result %s", delayCmd)
 	command := &remote_pb.Command{
 		Arguments:            []string{"/bin/sh", "-c", shellCommand},
 		OutputFiles:          []string{"foobar"},
@@ -231,20 +232,34 @@ func verifyActionResult(
 	casClient remote_pb.ContentAddressableStorageClient,
 	instanceName string,
 ) error {
-	if actionResult.StdoutDigest != nil && log.IsLevelEnabled(log.DebugLevel) {
+	if actionResult.StdoutDigest != nil {
 		stdoutBytes, err := casutil.GetBytes(ctx, casClient, actionResult.StdoutDigest, instanceName)
 		if err != nil {
 			return err
 		}
-		log.WithField("content", string(stdoutBytes)).Debug("stdout")
+		if log.IsLevelEnabled(log.DebugLevel) {
+			log.WithField("content", string(stdoutBytes)).Debug("stdout")
+		}
+		if !bytes.Equal(stdoutBytes, []byte("This is stdout.\n")) {
+			return fmt.Errorf("unexpected stdout: %s", string(stdoutBytes))
+		}
+	} else {
+		return fmt.Errorf("stdout was missing from action result")
 	}
 
-	if actionResult.StderrDigest != nil && log.IsLevelEnabled(log.DebugLevel) {
-		stderrBytes, err := casutil.GetBytes(ctx, casClient, actionResult.StdoutDigest, instanceName)
+	if actionResult.StderrDigest != nil {
+		stderrBytes, err := casutil.GetBytes(ctx, casClient, actionResult.StderrDigest, instanceName)
 		if err != nil {
 			return err
 		}
-		log.WithField("content", string(stderrBytes)).Debug("stderr")
+		if log.IsLevelEnabled(log.DebugLevel) {
+			log.WithField("content", string(stderrBytes)).Debug("stderr")
+		}
+		if !bytes.Equal(stderrBytes, []byte("This is stderr.\n")) {
+			return fmt.Errorf("unexpected stderr: %s", string(stderrBytes))
+		}
+	} else {
+		return fmt.Errorf("stderr was missing from action result")
 	}
 
 	if actionResult.ExitCode != 0 {
