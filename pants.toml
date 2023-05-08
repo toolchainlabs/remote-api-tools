@@ -26,7 +26,7 @@ org = "toolchainlabs"
 repo = "remote-api-tools"
 
 [golang]
-minimum_expected_version = "1.17"
+minimum_expected_version = "1.19"
 
 [buildsense]
 collect_platform_data = true
