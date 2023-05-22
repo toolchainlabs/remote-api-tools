@@ -1,12 +1,9 @@
 [GLOBAL]
-pants_version = "2.15.0"
+pants_version = "2.15.1"
 backend_packages.add = [
   "pants.backend.build_files.fmt.black",
   "pants.backend.experimental.go",
   "pants.backend.docker",
-]
-plugins = [
-  "toolchain.pants.plugin==0.27.0",
 ]
 # Caching is disabled by default so that desktop builds are not cached. CI caching is enabled in pants.ci.toml.
 remote_cache_read = false
@@ -18,18 +15,11 @@ remote_cache_warnings = "backoff"
 root_patterns = ["/"]
 
 [anonymous-telemetry]
-enabled = true
-repo_id = "E6C010FF-E41B-4AFE-9B6C-05F85B219046"
+enabled = false # anonymous-telemetry is being deprecated from pants
 
-[toolchain-setup]
-org = "toolchainlabs"
-repo = "remote-api-tools"
 
 [golang]
 minimum_expected_version = "1.19"
-
-[buildsense]
-collect_platform_data = true
 
 [docker.registries.dockerhub]
 address = "registry.hub.docker.com"
