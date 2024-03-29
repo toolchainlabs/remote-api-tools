@@ -122,6 +122,11 @@ func main() {
 	}
 	defer cs.Close()
 
+	var finalMaxBatchBlobSize = *maxBatchBlobSize
+	if cs.maxBatchBlobSize > 0 && cs.maxBatchBlobSize < finalMaxBatchBlobSize {
+		finalMaxBatchBlobSize = cs.maxBatchBlobSize
+	}
+
 	actionContext := load.ActionContext{
 		InstanceName:     instanceName,
 		CasClient:        cs.casClient,
@@ -129,7 +134,7 @@ func main() {
 		Ctx:              ctx,
 		KnownDigests:     make(map[string]bool),
 		WriteChunkSize:   *writeChunkSize,
-		MaxBatchBlobSize: *maxBatchBlobSize,
+		MaxBatchBlobSize: finalMaxBatchBlobSize,
 	}
 
 	for _, action := range actions {
