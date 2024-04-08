@@ -14,33 +14,33 @@ jobs:
     name: Build and test
     runs-on: ubuntu-20.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-go@v3
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.19'
-      - name: Cache pants
-        uses: actions/cache@v2
+      - name: Initialize Pants
+        uses: pantsbuild/actions/init-pants@v8
         with:
-          key: ${{ runner.os }}-${{ hashFiles('pants*toml') }}-v2
-          path: |
-             ~/.cache/pants/setup
+          # cache0 makes it easy to bust the cache if needed
+          gha-cache-key: cache0-
+          named-caches-hash: ${{ hashFiles('go.mod',) }}
       - name: Set env vars
         run: |
           echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
       - name: Pants Bootstrap
-        run: ./pants version
+        run: pants version
       - name:  show toolchain token
         if: github.event_name == 'push'
-        run: ./pants auth-token-info --auth-token-info-verbose
+        run: pants auth-token-info --auth-token-info-verbose
       - name: Lint & check
         run: |
-          ./pants lint check ::
+          pants lint check ::
       - name: Tests
         run: |
-          ./pants test ::
+          pants test ::
       - name: Build smoketest & casloader docker images
         run: |
-          ./pants package cmd/::
+          pants package cmd/::
       # Keeping those here since the publish workflow wasn't ported to use pants.
       - name: Build smoketest docker image
         uses: docker/build-push-action@v3
