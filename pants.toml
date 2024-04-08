@@ -17,9 +17,11 @@ root_patterns = ["/"]
 [anonymous-telemetry]
 enabled = false # anonymous-telemetry is being deprecated from pants
 
-
 [golang]
 minimum_expected_version = "1.19"
+
+[python]
+interpreter_constraints = ['==3.11.*']
 
 [docker.registries.dockerhub]
 address = "registry.hub.docker.com"
