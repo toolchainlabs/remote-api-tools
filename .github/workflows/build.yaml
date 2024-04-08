@@ -23,7 +23,7 @@ jobs:
         with:
           # cache0 makes it easy to bust the cache if needed
           gha-cache-key: cache0-
-          named-caches-hash: ${{ hashFiles('go.mod',) }}
+          named-caches-hash: ${{ hashFiles('go.mod') }}
       - name: Set env vars
         run: |
           echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
