@@ -41,10 +41,12 @@ func (self *readAction) String() string {
 }
 
 type readResult struct {
-	startTime time.Time
-	endTime   time.Time
-	success   int
-	errors    int
+	startTime       time.Time
+	endTime         time.Time
+	success         int
+	errors          int
+	byteStreamReads int
+	blobReads       int
 }
 
 type readWorkItem struct {
@@ -208,6 +210,11 @@ func (self *readAction) RunAction(actionContext *ActionContext) error {
 			}).Error("request error")
 		}
 		elapsedTimes[i] = r.elapsed
+		if int64(r.digest.SizeBytes) < actionContext.MaxBatchBlobSize {
+			result.blobReads += 1
+		} else {
+			result.byteStreamReads += 1
+		}
 
 		if i%100 == 0 {
 			log.Debugf("progress: %d / %d", i, len(workItems))
@@ -218,12 +225,14 @@ func (self *readAction) RunAction(actionContext *ActionContext) error {
 
 	close(resultChan)
 
-	fmt.Printf("program: %s\n  startTime: %s\n  endTime: %s\n  success: %d\n  errors: %d\n",
+	fmt.Printf("program: %s\n  startTime: %s\n  endTime: %s\n  success: %d\n  errors: %d\n  byteStreamReads: %d\n  blobReads: %d\n",
 		self.String(),
 		result.startTime.String(),
 		result.endTime.String(),
 		result.success,
 		result.errors,
+		result.byteStreamReads,
+		result.blobReads,
 	)
 
 	stats.PrintTimingStats(elapsedTimes)

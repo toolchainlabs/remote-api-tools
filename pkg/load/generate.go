@@ -39,10 +39,12 @@ func (g *generateAction) String() string {
 }
 
 type generateResult struct {
-	startTime time.Time
-	endTime   time.Time
-	success   int
-	errors    int
+	startTime        time.Time
+	endTime          time.Time
+	success          int
+	errors           int
+	byteStreamWrites int
+	blobWrites       int
 }
 
 type generateWorkItem struct {
@@ -180,6 +182,12 @@ func (g *generateAction) RunAction(actionContext *ActionContext) error {
 		}
 		elapsedTimes[i] = r.elapsed
 
+		if int64(r.blobSize) < actionContext.MaxBatchBlobSize {
+			result.blobWrites += 1
+		} else {
+			result.byteStreamWrites += 1
+		}
+
 		if i%100 == 0 {
 			log.Debugf("progress: %d / %d", i, g.numRequests)
 		}
@@ -189,12 +197,14 @@ func (g *generateAction) RunAction(actionContext *ActionContext) error {
 
 	close(resultChan)
 
-	fmt.Printf("program: %s\n  startTime: %s\n  endTime: %s\n  success: %d\n  errors: %d\n",
+	fmt.Printf("program: %s\n  startTime: %s\n  endTime: %s\n  success: %d\n  errors: %d\n  byteStreamWrites: %d\n  blobWrites: %d\n",
 		g.String(),
 		result.startTime.String(),
 		result.endTime.String(),
 		result.success,
 		result.errors,
+		result.byteStreamWrites,
+		result.blobWrites,
 	)
 
 	stats.PrintTimingStats(elapsedTimes)
