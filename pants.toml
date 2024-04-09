@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.15.1"
+pants_version = "2.19.1"
 backend_packages.add = [
   "pants.backend.build_files.fmt.black",
   "pants.backend.experimental.go",
@@ -17,9 +17,11 @@ root_patterns = ["/"]
 [anonymous-telemetry]
 enabled = false # anonymous-telemetry is being deprecated from pants
 
-
 [golang]
 minimum_expected_version = "1.19"
+
+[python]
+interpreter_constraints = ['==3.11.*']
 
 [docker.registries.dockerhub]
 address = "registry.hub.docker.com"
