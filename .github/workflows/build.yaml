@@ -32,9 +32,6 @@ jobs:
           echo 'PANTS_CONFIG_FILES=+["${{ github.workspace }}/pants.ci.toml"]' >> ${GITHUB_ENV}
       - name: Pants Bootstrap
         run: pants version
-      - name:  show toolchain token
-        if: github.event_name == 'push'
-        run: pants auth-token-info --auth-token-info-verbose
       - name: Lint & check
         run: |
           pants lint check ::
